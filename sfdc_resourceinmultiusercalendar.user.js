@@ -3,6 +3,8 @@
 // @name                 SFDC_ResourceInMultiUserCalendar
 // @description          マルチユーザカレンダーで、リソースカレンダーを表示します。
 // @include              https://*.salesforce.com/00U/c*
+// @updateURL            https://github.com/mino0123/SFDC_ResourceInMultiUserCalendar/raw/master/sfdc_resourceinmultiusercalendar.user.js
+// @version              0.0.1
 // ==/UserScript==
 
 var parameter = (function() {
