@@ -197,7 +197,7 @@
 	};
 
 	PageReformer.initCalendarTable = function () {
-		// リソース追加による、チェック・名前列の幅伸び防止
+		// リソース追加による既存カレンダーの幅変更を防止
 		this.holdWidth(document.getElementsByClassName('calendarTable')[0]);
 		this.holdWidth(document.getElementsByClassName('cbCol')[0]);
 		this.holdWidth(document.getElementById('nameCol'));
