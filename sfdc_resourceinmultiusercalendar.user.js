@@ -278,8 +278,8 @@
 
 	// フォームをtableとtrの間から移動し、子要素を見えるようにする。
 	PageReformer.moveForm = function () {
-		form = document.getElementById('ids');
-		bodyTable = document.getElementById('bodyTable');
+		var form = document.getElementById('ids'),
+		    bodyTable = document.getElementById('bodyTable');
 		bodyTable.parentNode.appendChild(form);
 		form.appendChild(bodyTable);
 	};
@@ -290,9 +290,6 @@
 	    resourcesTable,
 	    resources,
 	    dateParamStr,
-	    form,
-	    bodyTable,
-	    reformar,
 	    cellHash = {};
 	parameter = new Parameter();
 
