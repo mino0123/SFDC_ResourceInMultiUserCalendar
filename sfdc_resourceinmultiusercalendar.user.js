@@ -93,42 +93,18 @@
 		return this.create(this.asDate(), 'md1');
 	};
 
-	function holdWidth(e) {
-		if (e) {
-			e.style.width = e.scrollWidth + 'px';
-		}
+	function ResourceListLoader() {
 	}
 
-	function initCalendarTable() {
-		var headerRow = document.getElementsByClassName('headerRow')[0],
-		    space = document.createElement('td');
-		// テーブルの余白を埋めるためのセル
-		space.style.width = '100%';
-		headerRow.appendChild(space);
-		// リソース追加による、チェック・名前列の幅伸び防止
-		holdWidth(document.getElementsByClassName('calendarTable')[0]);
-		holdWidth(document.getElementsByClassName('cbCol')[0]);
-		holdWidth(document.getElementById('nameCol'));
-		// TODO 1日カレンダーでもcb,namecol以外を100%にすれば縮まらない
-	}
-
-	function appendResourcesTable(parent) {
-		var table = document.createElement('table');
-		table.style.width = '100%';
-		table.insertRow(0);
-		parent.appendChild(table);
-		return table;
-	}
-
-	function scrapeResourceRow(row) {
+	ResourceListLoader.scrapeResourceRow = function (row) {
 		var link = row.getElementsByTagName('a')[0],
 		    name = link.textContent,
 		    onclick = link.getAttribute('onclick'),
 		    id = onclick.match(/023[\d\w]{12}/)[0];
 		return {id: id, name: name};
-	}
+	};
 
-	function scrapeResourceList(html) {
+	ResourceListLoader.scrapeResourceList = function (html) {
 		var resources = [],
 		    text,
 		    parser = new DOMParser(),
@@ -143,25 +119,25 @@
 		rows.shift(); // skip header
 		len = rows.length;
 		for (i = 0; i < len; i += 1) {
-			resources.push(scrapeResourceRow(rows[i]));
+			resources.push(this.scrapeResourceRow(rows[i]));
 		}
 		return resources;
-	}
+	};
 
-	function loadResourceList() {
+	ResourceListLoader.loadResourceList = function () {
 		var resources = [],
 			url = '/_ui/common/data/LookupResultsFrame?lktp=023&cltp=resource',
 			req = new XMLHttpRequest();
 		req.open('GET', url, false);
 		req.send(null);
-		return scrapeResourceList(req.responseText);
+		return this.scrapeResourceList(req.responseText);
+	};
+
+	function ResourceLoader(resource) {
+		this.resource = resource;
 	}
 
-	function sortResource(resource1, resource2) {
-		return resource1.name < resource2.name;
-	}
-
-	function scrapeResouceCalendar(html) {
+	ResourceLoader.prototype.scrapeResouceCalendar = function (html) {
 		var doc = document.cloneNode(false),
 		    range,
 		    fragment;
@@ -178,10 +154,10 @@
 			doc.innerHTML = html.replace(/.*?<body.*?>/, '').replace(/<\/body>.*/, '');
 		}
 		return doc;
-	}
+	};
 
-	function getCalendarElement(html) {
-		var doc = scrapeResouceCalendar(html),
+	ResourceLoader.prototype.getCalendarElement = function (html) {
+		var doc = this.scrapeResouceCalendar(html),
 		    calendar,
 		    calendarBody = doc.getElementsByClassName('apexp')[0];
 		if (calendarBody) {
@@ -190,39 +166,77 @@
 			calendar = doc.getElementsByClassName('bCalendar')[0];
 		}
 		return calendar;
+	};
+
+	ResourceLoader.prototype.load = function (callback) {
+		var xhr = new XMLHttpRequest(),
+		    that = this;
+		xhr.open('GET', this.resource.url, true);
+		xhr.onload = function () {
+			var calendar = that.getCalendarElement(xhr.responseText);
+			callback(calendar, that.resource);
+		};
+		xhr.send();
+	};
+
+	ResourceLoader.loadResources = function (resources, callback) {
+		var len = resources.length,
+		    i,
+		    loader;
+		for (i = 0; i < len; i += 1) {
+			loader = new ResourceLoader(resources[i]);
+			loader.load(callback);
+		}
+	};
+
+	function PageReformer() {
 	}
 
-	function moveChildren(from, to) {
+	PageReformer.holdWidth = function (e) {
+		e.style.width = e.scrollWidth + 'px';
+	};
+
+	PageReformer.initCalendarTable = function () {
+		var headerRow = document.getElementsByClassName('headerRow')[0],
+		    space = document.createElement('td');
+		// テーブルの余白を埋めるためのセル
+		space.style.width = '100%';
+		headerRow.appendChild(space);
+		// リソース追加による、チェック・名前列の幅伸び防止
+		this.holdWidth(document.getElementsByClassName('calendarTable')[0]);
+		this.holdWidth(document.getElementsByClassName('cbCol')[0]);
+		this.holdWidth(document.getElementById('nameCol'));
+		// TODO 1日カレンダーでもcb,namecol以外を100%にすれば縮まらない
+	};
+
+	PageReformer.initResourceListTable = function (parent) {
+		var table = document.createElement('table');
+		table.style.width = '100%';
+		table.insertRow(0);
+		parent.appendChild(table);
+		return table;
+	};
+
+	PageReformer.moveChildren = function (from, to) {
 		Array.prototype.forEach.call(from.childNodes, function (node) {
 			if (node.nodeType === 1) {
 				to.appendChild(node.cloneNode(true));
 			}
 		});
-	}
+	};
 
-	function removeFormElement(element) {
+	PageReformer.removeFormElement = function (element) {
 		if (element.tagName === 'FORM') {
 			element.parentNode.removeChild(element);
 			var newCalendar = document.createElement('div');
-			moveChildren(element, newCalendar);
+			this.moveChildren(element, newCalendar);
 			return newCalendar;
 		} else {
 			return element;
 		}
-	}
+	};
 
-	function loadResouceCalendar(resource, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', resource.url, true);
-		xhr.onload = function () {
-			var calendar = getCalendarElement(xhr.responseText);
-			calendar = removeFormElement(calendar); // フォームがあると移動後に2重になるため削除
-			callback(calendar);
-		};
-		xhr.send();
-	}
-
-	function appendInvtee(calendar, resource) {
+	PageReformer.appendInvtee = function (calendar, resource) {
 		var calendarWrapper,
 		    invtee,
 		    titleLink,
@@ -243,9 +257,9 @@
 		titleElm = document.createElement('h3');
 		titleElm.textContent = resource.name;
 		titleLink.appendChild(titleElm);
-	}
+	};
 
-	function wrapClass(elm, classNames) {
+	PageReformer.wrapClass = function (elm, classNames) {
 		var targetElm = elm;
 		classNames.forEach(function (cName) {
 			var div = document.createElement('div');
@@ -254,28 +268,21 @@
 			targetElm = div;
 		});
 		return targetElm;
-	}
+	};
 
-	function createOnResourceLoaded(resource, cell) {
-		return function (calendar) {
-			appendInvtee(calendar, resource);
-			var bCalendar = wrapClass(calendar, ['calendarLayout', 'bCalendar']);
-			cell.appendChild(bCalendar);
-		};
-	}
+	PageReformer.appendResourceCalendar = function (calendar, resource, cell) {
+		calendar = this.removeFormElement(calendar); // フォームがあると移動後に2重になるため削除
+		this.appendInvtee(calendar, resource);
+		cell.appendChild(this.wrapClass(calendar, ['calendarLayout', 'bCalendar']));
+	};
 
-	function loadResourceCalendars(parent, resources) {
-		var len = resources.length,
-		    i,
-		    r,
-		    cell;
-		for (i = 0; i < len; i += 1) {
-			r = resources[i];
-			cell = parent.rows[0].insertCell(0);
-			cell.style.minWidth = '200px';
-			loadResouceCalendar(r, createOnResourceLoaded(r, cell));
-		}
-	}
+	// フォームをtableとtrの間から移動し、子要素を見えるようにする。
+	PageReformer.moveForm = function () {
+		form = document.getElementById('ids');
+		bodyTable = document.getElementById('bodyTable');
+		bodyTable.parentNode.appendChild(form);
+		form.appendChild(bodyTable);
+	};
 
 
 	var parameter,
@@ -284,27 +291,33 @@
 	    resources,
 	    dateParamStr,
 	    form,
-	    bodyTable;
+	    bodyTable,
+	    reformar,
+	    cellHash = {};
 	parameter = new Parameter();
 
 	if (!parameter.isMultiUser) {
 		return;
 	}
 
-	initCalendarTable();
+	PageReformer.initCalendarTable();
 	bodyDiv = document.getElementById('bodyCell');
-	resourcesTable = appendResourcesTable(bodyDiv);
-	resources = loadResourceList();
-	resources = resources.sort(sortResource);
+	resourcesTable = PageReformer.initResourceListTable(bodyDiv);
+	resources = ResourceListLoader.loadResourceList();
+	resources = resources.sort(function (r1, r2) {
+		return r1.name < r2.name;
+	});
 	dateParamStr = parameter.getDateParameters();
 	resources.forEach(function (r) {
 		r.url = '/00U/c?cType=1&cal_lkid=' + r.id + '&cal_lspf=1&' + dateParamStr;
+		// リソース追加先
+		var cell = resourcesTable.rows[0].insertCell(0);
+		cell.style.minWidth = '200px';
+		cellHash[r.id] = cell;
 	});
-	loadResourceCalendars(resourcesTable, resources);
+	ResourceLoader.loadResources(resources, function (calendar, resource) {
+		PageReformer.appendResourceCalendar(calendar, resource, cellHash[resource.id]);
+	});
+	PageReformer.moveForm();
 
-	// フォームをtableとtrの間から移動し、子要素を見えるようにする。
-	form = document.getElementById('ids');
-	bodyTable = document.getElementById('bodyTable');
-	bodyTable.parentNode.appendChild(form);
-	form.appendChild(bodyTable);
 }());
