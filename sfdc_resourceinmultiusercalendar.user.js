@@ -197,16 +197,10 @@
 	};
 
 	PageReformer.initCalendarTable = function () {
-		var headerRow = document.getElementsByClassName('headerRow')[0],
-		    space = document.createElement('td');
-		// テーブルの余白を埋めるためのセル
-		space.style.width = '100%';
-		headerRow.appendChild(space);
 		// リソース追加による、チェック・名前列の幅伸び防止
 		this.holdWidth(document.getElementsByClassName('calendarTable')[0]);
 		this.holdWidth(document.getElementsByClassName('cbCol')[0]);
 		this.holdWidth(document.getElementById('nameCol'));
-		// TODO 1日カレンダーでもcb,namecol以外を100%にすれば縮まらない
 	};
 
 	PageReformer.initResourceListTable = function (parent) {
