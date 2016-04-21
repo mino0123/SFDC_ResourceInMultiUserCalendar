@@ -24,8 +24,16 @@
 			pair = arr[i].split('=');
 			name = pair[0];
 			value = pair[1];
-			this.params[name] = value;
+			this.params[name] = decodeURIComponent(value);
 		}
+		
+		if (this.params.dtfd) {
+			// カレンダーからの入力が最優先
+			const date = new Date(this.params.dtfd);
+			this.params.md0 = date.getFullYear();
+			this.params.md3 = Parameter.getDaysOfYear(date);
+		}
+
 		this.isMultiUser = this.params.cType === '2';
 		this.isDay = this.params.md3 !== undefined;
 		this.isWeek = this.params.md2 !== undefined;
@@ -33,7 +41,7 @@
 	}
 	Parameter.getDaysOfYear = function (target) {
 		var firstDate = new Date(target.getFullYear(), 0, 1);
-		return Parameter.getBetweenDays(firstDate, target);
+		return Parameter.getBetweenDays(firstDate.getTime(), target.getTime()) + 1;
 	};
 	Parameter.getWeeksOfYear = function (target) {
 		var firstDate = new Date(target.getFullYear(), 0, 1);
