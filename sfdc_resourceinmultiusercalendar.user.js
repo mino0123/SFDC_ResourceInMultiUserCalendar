@@ -5,6 +5,7 @@
 // @include              https://*.salesforce.com/00U/c*
 // @updateURL            https://github.com/mino0123/SFDC_ResourceInMultiUserCalendar/raw/master/sfdc_resourceinmultiusercalendar.user.js
 // @version              0.0.1
+// @noframes
 // ==/UserScript==
 
 /*jslint browser: true, regexp: true */
