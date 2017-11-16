@@ -13,6 +13,11 @@
 (function () {
 	'use strict';
 
+	function urlFromRoot(url) {
+		var { protocol, hostname } = location;
+		return protocol + hostname + url;
+	}
+
 	function Parameter() {
 		var arr = location.search.substring(1).split('&'),
 		    len = arr.length,
@@ -135,7 +140,7 @@
 
 	ResourceListLoader.loadResourceList = function () {
 		var resources = [],
-			url = '/_ui/common/data/LookupResultsFrame?lktp=023&cltp=resource',
+			url = urlFromRoot('/_ui/common/data/LookupResultsFrame?lktp=023&cltp=resource'),
 			req = new XMLHttpRequest();
 		req.open('GET', url, false);
 		req.send(null);
@@ -309,7 +314,7 @@
 	});
 	dateParamStr = parameter.getDateParameters();
 	resources.forEach(function (r) {
-		r.url = '/00U/c?cType=1&cal_lkid=' + r.id + '&cal_lspf=1&' + dateParamStr;
+		r.url = urlFromRoot('/00U/c?cType=1&cal_lkid=' + r.id + '&cal_lspf=1&' + dateParamStr);
 		// リソース追加先
 		var cell = resourcesTable.rows[0].insertCell(0);
 		cell.style.minWidth = '200px';
